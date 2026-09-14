@@ -1,0 +1,22 @@
+FROM joomla:5.1-php8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        procps iproute2 ca-certificates curl default-mysql-client; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN sed -i 's/^Listen 80$/Listen 8090/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8090>/' /etc/apache2/sites-enabled/*.conf
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/joomla/app-init.sh          /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+EXPOSE 8090
+ENV TRACELIB_PORT=8090 \
+    UPSTREAM_ENTRYPOINT=/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

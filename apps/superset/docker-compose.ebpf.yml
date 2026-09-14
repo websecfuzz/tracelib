@@ -1,0 +1,24 @@
+services:
+  superset:
+    entrypoint: ["/usr/local/bin/apponly-entrypoint.sh"]
+    command: ["/app/start.sh"]
+    volumes:
+      - ../../common/apponly-entrypoint.sh:/usr/local/bin/apponly-entrypoint.sh:ro
+  tracelib_ebpf:
+    build:
+      context: ../..
+      dockerfile: ebpf-sidecar/Dockerfile
+    profiles: ["ebpf"]
+    depends_on:
+      - superset
+    network_mode: "service:superset"
+    pid: "host"
+    privileged: true
+    environment:
+      TRACELIB_PORT: "8096"
+      TRACELIB_HEADER: "X-REQUEST-ID"
+      TRACELIB_BACKEND: "ebpf"
+    volumes:
+      - /dev/shm:/dev/shm
+      - /sys/kernel/tracing:/sys/kernel/tracing
+      - /sys/kernel/debug:/sys/kernel/debug

@@ -1,0 +1,10 @@
+/api/get-users?owner=built-in&owner%5B%5D=
+/api/get-applications?owner=built-in&owner%5B%5D=
+/api/get-account?owner=built-in
+/providers?owner=built-in
+/api/get-organizations?owner=built-in
+/users?owner=built-in
+/applications?owner=built-in
+/?owner=built-in
+/api/get-providers?owner=built-in
+/organizations?owner=built-in

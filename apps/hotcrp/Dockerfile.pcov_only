@@ -1,0 +1,36 @@
+FROM php:8.3-cli
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git unzip default-mysql-client procps iproute2 \
+        ca-certificates curl \
+        build-essential libc6-dev autoconf pkg-config \
+    && docker-php-ext-install mysqli pdo_mysql \
+    && pecl install pcov \
+    && docker-php-ext-enable pcov \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /var/www/html
+RUN git clone --depth 1 https://github.com/kohler/hotcrp.git /var/www/html
+
+RUN mkdir -p /tracelib-support /coverage && chmod 777 /coverage
+COPY php-common/pcov_hook.php       /tracelib-support/pcov_hook.php
+COPY php-common/coverage_report.php /tracelib-support/coverage_report.php
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/hotcrp/start.sh                /usr/local/bin/hotcrp-start
+COPY apps/hotcrp/ensure-admin.php        /var/www/html/ensure-admin.php
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /usr/local/bin/hotcrp-start
+
+RUN { \
+        echo "pcov.enabled=1"; \
+        echo "pcov.directory=/var/www/html"; \
+        echo "auto_prepend_file=/tracelib-support/pcov_hook.php"; \
+    } > /usr/local/etc/php/conf.d/99-tracelib-pcov.ini
+
+EXPOSE 8087
+ENV TRACELIB_PORT=8087 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["hotcrp-start"]

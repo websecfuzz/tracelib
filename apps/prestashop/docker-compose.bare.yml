@@ -1,0 +1,38 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mysql:8.4
+        COPY ./_resources/db.sql /docker-entrypoint-initdb.d/db.sql
+    command: mysqld
+    environment:
+      MYSQL_DATABASE:      db
+      MYSQL_USER:          user
+      MYSQL_PASSWORD:      password
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST:     "%"
+    volumes:
+      - prestashop_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--protocol=tcp", "-u", "user", "-ppassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  prestashop:
+    build:
+      context: ../..
+      dockerfile: apps/prestashop/Dockerfile.bare
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8100:8100"
+    environment:
+      PRESTASHOP_DB_HOST:     db
+      PRESTASHOP_DB_USER:     user
+      PRESTASHOP_DB_PASSWORD: password
+
+volumes:
+  prestashop_db:

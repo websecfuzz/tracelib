@@ -1,0 +1,10 @@
+/adminzcfuzz/index.php?cmd=category_product_listing&cID=64&cPath=64&pID=169&page=1&action=set_products_sort_order&reset_categories_products_sort_order=0
+/adminzcfuzz/?cmd=category_product_listing&action=setflag&product_type=4&cPath=64&page=1&main_page=ask_a_question&pid=30&flag=1&pID=169
+/index.php?main_page=redirect&cPath=1&cmd=banner_statistics&product_type=1&pID=78&action=banner&page=1&products_filter=168&products_id=48&language=en&bID=7&goto=1
+/index.php?main_page=index&cPath=1&sort=20a&page=1&filter_id=1&alpha_filter_id=65
+/index.php?main_page=advanced_search_result&keyword=&search_in_description=1&categories_id=1&inc_subcat=1&manufacturers_id=0&pfrom=&pto=&dfrom=&dto=
+/index.php?main_page=products_new&disp_order=6&page=1
+/index.php?main_page=specials&disp_order=1&page=1
+/adminzcfuzz/index.php?cmd=customers&search=&page=1&cID=1&action=edit
+/?main_page=page&id=5
+/adminzcfuzz/index.php?cmd=configuration&gID=1&cID=1&action=edit

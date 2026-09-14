@@ -1,0 +1,10 @@
+/owners?lastName=&page=1
+/owners?lastName=Davis&page=1
+/owners/find?lastName=
+/owners/1?edit=false
+/owners/1/edit
+/owners/1/pets/new
+/owners/1/pets/1/edit
+/owners/1/pets/1/visits/new
+/owners/new?lastName=&city=
+/vets.html?page=1

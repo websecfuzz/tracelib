@@ -1,0 +1,10 @@
+/agents?sort=last_check_at.desc&page=1&service_id=
+/agents/1?tab=details&return=%2Fagents
+/agents/new?type=Agents%3A%3AWebsiteAgent&return=%2Fagents
+/agents/1/events?page=1&sort=created_at.desc
+/events?agent_id=1&page=1&hl=1
+/scenarios/1?sort=name.asc&page=1&tab=details
+/user_credentials?sort=credential_name.asc&page=1
+/jobs?sort=created_at.desc&page=1
+/admin/users?sort=email.asc&page=1
+/diagram?scenario_id=1&layout=LR

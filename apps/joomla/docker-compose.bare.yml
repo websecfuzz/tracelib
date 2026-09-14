@@ -1,0 +1,31 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: joomla
+      MARIADB_USER: joomla
+      MARIADB_PASSWORD: joomla
+    volumes:
+      - joomla_db:/var/lib/mysql
+
+  joomla:
+    build:
+      context: ../..
+      dockerfile: apps/joomla/Dockerfile.bare
+    depends_on:
+      - db
+    ports:
+      - "8090:8090"
+    environment:
+      JOOMLA_DB_HOST: db
+      JOOMLA_DB_NAME: joomla
+      JOOMLA_DB_USER: joomla
+      JOOMLA_DB_PASSWORD: joomla
+      JOOMLA_DB_PREFIX: j_
+      JOOMLA_ADMIN_USER: admin
+      JOOMLA_ADMIN_PASSWORD: admin12345678
+      JOOMLA_ADMIN_EMAIL: admin@example.com
+
+volumes:
+  joomla_db:

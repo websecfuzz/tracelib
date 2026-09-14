@@ -1,0 +1,18 @@
+FROM ghost:5
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 default-mysql-client \
+        ca-certificates curl; \
+    rm -rf /var/lib/apt/lists/*
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/ghost/ghost-start.sh        /usr/local/bin/ghost-start.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /usr/local/bin/ghost-start.sh
+
+ENV TRACELIB_PORT=2368 \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["ghost-start.sh"]

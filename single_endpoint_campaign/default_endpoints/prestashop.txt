@@ -1,0 +1,10 @@
+/admin9671czlrok7qbdn2pre/index.php?controller=AdminDashboard&token=&tab=AdminDashboard
+/admin9671czlrok7qbdn2pre/index.php?controller=AdminProducts&token=&page=1&limit=10&filter_column_name=
+/admin9671czlrok7qbdn2pre/index.php?controller=AdminCategories&token=&page=1&categoryFilter_name=
+/admin9671czlrok7qbdn2pre/index.php/improve/international/translations/?_route=&_token=&back=&hook-search=&hookId=104&lang=en&locale=en-US&moduleId=67&selected=ps_categorytree&show_modules=16&tab=AdminModulesPositions&tax%5Blimit%5D=10&tax%5Boffset%5D=50&token=&type=modules
+/admin9671czlrok7qbdn2pre/index.php/configure/advanced/import/sample/download/store_contacts?_route=&_token=&back=&controller=AdminModulesPositions&editGraft=&hook-search=&id_hook=60&id_module=&line=1217&liteDisplaying=&logs%5Blimit%5D=10&logs%5Boffset%5D=230&submitFormAjax=&token=
+/admin9671czlrok7qbdn2pre/index.php/improve/modules/manage?_token=&back=&controller=AdminModulesPositions&hook-search=&id_hook=60&id_module=49&lang=en&locale=en-US&selected=ps_banner&show_modules=18&tab=AdminModulesPositions&token=&type=modules
+/admin9671czlrok7qbdn2pre/index.php/sell/orders/?_token=&limit=10&page=1&orderBy=id_order&sortOrder=desc&filter_column_id_order=&filter_column_reference=&filter_column_customer=&filter_column_total_paid_tax_incl=
+/admin9671czlrok7qbdn2pre/index.php/sell/catalog/products?_token=&page=1&limit=10&orderBy=id_product&sortOrder=asc&filter_column_id_product=&filter_column_name=&filter_column_reference=&filter_column_active=
+/admin9671czlrok7qbdn2pre/index.php/sell/customers/?_token=&page=1&limit=10&orderBy=id_customer&sortOrder=asc&filter_column_id_customer=&filter_column_email=&filter_column_firstname=&filter_column_lastname=
+/admin9671czlrok7qbdn2pre/index.php?controller=AdminOrders&token=&filter_order=&submitFilterorder=1&id_order=1

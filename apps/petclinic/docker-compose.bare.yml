@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petclinic-root
+      MYSQL_DATABASE: petclinic
+      MYSQL_USER: petclinic
+      MYSQL_PASSWORD: petclinic
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-upetclinic", "-ppetclinic"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  petclinic:
+    build:
+      context: ../..
+      dockerfile: apps/petclinic/Dockerfile.bare
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8098:8098"
+    environment:
+      PETCLINIC_DB_HOST: db
+      PETCLINIC_DB_NAME: petclinic
+      PETCLINIC_DB_USER: petclinic
+      PETCLINIC_DB_PASSWORD: petclinic
+      WAIT_FOR_DB: "1"
+
+volumes:
+  db_data:

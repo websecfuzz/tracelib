@@ -1,0 +1,10 @@
+/en/search/node?advanced-form=1&f%5B0%5D=type%3Aarticle&f%5B1%5D=type%3Apage&f%5B2%5D=type%3Arecipe&f%5B3%5D=language%3Aen&f%5B4%5D=language%3Aes&f%5B5%5D=language%3Aund&f%5B6%5D=language%3Azxx&keys=
+/search/node?advanced-form=1&f%5B0%5D=type%3Aarticle&f%5B1%5D=type%3Apage&f%5B2%5D=type%3Arecipe&f%5B3%5D=language%3Aes&f%5B4%5D=language%3Aund&f%5B5%5D=language%3Azxx&keys=
+/admin/people?op=Reset&order=Member+for&permission=All&role=All&sort=asc&status=All&user=
+/en/admin/people?op=Reset&order=Member+for&permission=All&role=All&sort=asc&status=All&user=
+/es/admin/people?op=Reset&order=Member+for&permission=All&role=All&sort=asc&status=All&user=
+/en/admin/content?langcode=All&order=changed&sort=desc&status=All&title=&type=All
+/admin/content?title=&type=All&status=All&langcode=All&order=changed&sort=desc
+/en/admin/content/media?langcode=All&name=&order=changed&sort=desc&status=All&type=All
+/es/admin/content/media?langcode=All&name=&order=changed&sort=desc&status=All&type=All
+/en/user/10/edit?op=Reset&order=access&permission=All&role=All&sort=desc&status=All&user=

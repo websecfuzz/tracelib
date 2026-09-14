@@ -1,0 +1,10 @@
+/admin/users?q=&sort=alphabetically&page=1
+/admin/repos?q=&sort=alphabetically&page=1
+/admin/orgs?q=&sort=alphabetically&page=1
+/admin/notices?page=1&q=&sort=
+/admin/monitor?q=&sort=&page=1
+/explore/repos?q=&tab=&sort=recentupdate&page=1
+/explore/users?q=&tab=&sort=alphabetically&page=1
+/issues?type=your_repositories&repo=0&sort=&state=open
+/pulls?type=your_repositories&repo=0&sort=&state=open
+/gogsadmin?tab=stars&page=1&q=&sort=alphabetically

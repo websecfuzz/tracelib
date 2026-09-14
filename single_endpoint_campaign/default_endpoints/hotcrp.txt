@@ -1,0 +1,10 @@
+/users.php?t=pc&sort=name&showtags=1&showcollab=1&showtopics=1&shownprefs=1&showorcid=1&showcountry=1&shows01=1&shows02=1&redisplay=1&scoresort=maxmin
+/graph.php/formula?x=avg%28RevExp%29&y=avg%28OveMer%29&q1=&q%24=ALL&s1=plain&s%24=plain
+/help.php/bulkassign?q=&m=edit&p=1&u=&n=&date=
+/log.php?q=&p=1&u=&n=&date=&download=1
+/bulkassign.php?qa=%23search1+HIGHLIGHT+%23search2&qo=&qx=&qt=ac&t=all
+/search.php?qa=re%3A4&qo=&qx=&qt=tag&t=all
+/search.php?qa=au%3Asearch1+THEN+au%3Asearch2&qo=&qx=&qt=ab&t=active
+/settings.php/reviewform?qa=%23search1+HIGHLIGHT+%23search2&qo=&qx=&qt=ac&t=all
+/reviewprefs.php?q=&redisplay=1&reviewer=admin%40example.com
+/paper.php?q=&m=edit

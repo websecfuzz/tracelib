@@ -1,0 +1,34 @@
+FROM php:8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        procps iproute2 ca-certificates curl unzip \
+        libzip-dev libpng-dev libonig-dev default-mysql-client; \
+    docker-php-ext-install mysqli pdo_mysql gd zip mbstring; \
+    rm -rf /var/lib/apt/lists/*
+
+ARG PHPBB_VERSION=3.3.13
+RUN curl -fsSL "https://download.phpbb.com/pub/release/3.3/${PHPBB_VERSION}/phpBB-${PHPBB_VERSION}.tar.bz2" -o /tmp/phpbb.tbz2 \
+    && rm -rf /var/www/html \
+    && mkdir -p /var/www/html \
+    && tar -xjf /tmp/phpbb.tbz2 -C /tmp \
+    && cp -a /tmp/phpBB3/. /var/www/html/ \
+    && rm -rf /tmp/phpbb.tbz2 /tmp/phpBB3 \
+    && chown -R www-data:www-data /var/www/html
+
+RUN a2enmod rewrite \
+    && sed -i 's/^Listen 80$/Listen 8089/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8089>/' /etc/apache2/sites-enabled/*.conf
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/phpbb/app-init.sh           /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+EXPOSE 8089
+ENV TRACELIB_PORT=8089 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

@@ -1,0 +1,42 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mysql:8.4
+        COPY ./_resources/db.sql /docker-entrypoint-initdb.d/db.sql
+    command: mysqld
+    environment:
+      MYSQL_DATABASE:      db
+      MYSQL_USER:          user
+      MYSQL_PASSWORD:      password
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST:     "%"
+    volumes:
+      - zencart_native_db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--protocol=tcp", "-u", "user", "-ppassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  zencart:
+    build:
+      context: ../..
+      dockerfile: apps/zencart/Dockerfile.native
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8094:8094"
+    environment:
+      ZENCART_DB_HOST:     db
+      ZENCART_DB_USER:     user
+      ZENCART_DB_PASSWORD: password
+    volumes:
+      - ${WEBFUZZ_INSTR_DIR:-./var-instr}:/var/instr
+      - zencart_native_coverage:/coverage
+
+volumes:
+  zencart_native_db:
+  zencart_native_coverage:

@@ -1,0 +1,25 @@
+services:
+  redmine:
+    build:
+      context: ../..
+      dockerfile: apps/redmine/Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      REDMINE_DB_SQLITE: /usr/src/redmine/sqlite/redmine.db
+      REDMINE_ADMIN_PASSWORD: admin123
+    volumes:
+      - /dev/shm:/dev/shm
+      - redmine_coverage:/coverage
+      - redmine_data:/usr/src/redmine/sqlite
+      - redmine_files:/usr/src/redmine/files
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+
+volumes:
+  redmine_coverage:
+  redmine_data:
+  redmine_files:

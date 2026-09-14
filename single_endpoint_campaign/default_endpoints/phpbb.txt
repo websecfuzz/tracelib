@@ -1,0 +1,10 @@
+/search.php?keywords=&terms=all&author=&fid%5B%5D=2&sc=1&sf=all&sr=posts&sk=t&sd=d&st=0&ch=300&submit=Search
+/memberlist.php?mode=searchuser&username=&email=&joined_select=lt&joined=&active_select=lt&active=&count_select=eq&count=10&search_group_id=0&submit=Search
+/viewforum.php?f=2&start=0&sk=t&sd=d&st=0
+/viewtopic.php?f=2&t=1&start=0&hilit=&view=print
+/ucp.php?mode=login&redirect=.%2Fviewtopic.php%3Ft%3D1&sid=&login=Login
+/search.php?search_id=active_topics&start=0&sk=t&sd=d
+/app.php/help/faq?sid=&style=1&search=
+/app.php/post/1/report?f=2&p=1&reason_id=1&report_text=&notify=1
+/adm/index.php?i=acp_users&mode=overview&u=2&sid=
+/memberlist.php?mode=team&sk=a&sd=a&start=0

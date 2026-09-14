@@ -1,0 +1,31 @@
+configuration:
+  name: standalone
+  appenders:
+    console:
+      name: console
+      target: SYSTEM_OUT
+      PatternLayout:
+        pattern: "[%-5level %date{ISO8601} %logger] (%thread) %msg %xThrowable%n"
+    file:
+      -
+        name: file
+        fileName: bmp.log
+        PatternLayout:
+          pattern: "[%-5level %date{ISO8601} %logger] (%thread) %msg %xThrowable%n"
+        append: false
+  loggers:
+    logger:
+      -
+        name: net.lightbody.bmp.proxy.jetty.util.ThreadedServer
+        level: warn
+        additivity: false
+      -
+        name: net.lightbody.bmp
+        level: info
+    root:
+      level: info
+      appender-ref:
+        -
+          ref: console
+        -
+          ref: file

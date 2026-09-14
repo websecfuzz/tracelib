@@ -1,0 +1,10 @@
+/users/list/?_flt_0_username=&_oc_UserDBModelView=username&_od_UserDBModelView=asc&page=0&psize_UserDBModelView=25
+/roles/list/?_flt_0_name=&_oc_RoleModelView=name&_od_RoleModelView=asc&page=0&psize_RoleModelView=25
+/dashboard/list/?filters=&pageIndex=0&sortColumn=changed_on&sortOrder=desc&viewMode=table
+/chart/list/?filters=&pageIndex=0&sortColumn=slice_name&sortOrder=asc&viewMode=table
+/tablemodelview/list/?filters=&pageIndex=0&sortColumn=table_name&sortOrder=asc
+/databaseview/list/?filters=&pageIndex=0&sortColumn=database_name&sortOrder=asc
+/superset/welcome/?tab=all&sortColumn=changed_on&sortOrder=desc
+/api/v1/dashboard/?q=%28order_column%3Achanged_on_delta_humanized%2Corder_direction%3Adesc%2Cpage%3A0%2Cpage_size%3A25%29
+/api/v1/chart/?q=%28order_column%3Aslice_name%2Corder_direction%3Aasc%2Cpage%3A0%2Cpage_size%3A25%29
+/api/v1/log/?q=%28order_column%3Adttm%2Corder_direction%3Adesc%2Cpage%3A0%2Cpage_size%3A25%29

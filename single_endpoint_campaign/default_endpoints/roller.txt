@@ -1,0 +1,19 @@
+# Apache Roller: authoring and admin actions.
+#
+# KNOWN LIMITATION: these ten require an authenticated session, and Roller's
+# login cannot currently be established from a campaign cell (see
+# apps/roller/app-init.sh). Until that is fixed they answer with a redirect to
+# /roller-ui/login.rol, which the validator counts as reachable but which gives
+# the fuzzer nothing to work with. Roller's anonymous surface is not a usable
+# substitute: without a weblog, everything except /roller/, the login page and
+# the registration page returns 404.
+/roller/roller-ui/menu.rol?tab=weblogs
+/roller/roller-ui/profile.rol?tab=profile
+/roller/roller-ui/createWeblog.rol?locale=en_US&timeZone=UTC
+/roller/roller-ui/admin/globalConfig.rol?tab=general
+/roller/roller-ui/admin/userAdmin.rol?userName=rolleradmin
+/roller/roller-ui/admin/modifyUser.rol?bean.userName=rolleradmin
+/roller/roller-ui/admin/commonPingTargets.rol?tab=ping
+/roller/roller-ui/admin/cacheInfo.rol?refresh=false
+/roller/roller-ui/register.rol?activationStatus=
+/roller/?page=1&locale=en

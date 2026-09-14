@@ -1,0 +1,10 @@
+/admin/pages/1/?ordering=title&has_child_pages=false&p=1
+/admin/pages/search/?q=home&ordering=title&p=1
+/admin/images/?q=logo&collection_id=&ordering=-created_at&tag=&p=1
+/admin/documents/?q=report&collection_id=&ordering=title&p=1
+/admin/users/?q=admin&ordering=name&group=&is_active=true&p=1
+/admin/redirects/?q=old&ordering=old_path&is_permanent=true&p=1
+/admin/forms/?ordering=title&p=1
+/admin/reports/site-history/?q=&action=wagtail.edit&hide_commenting_actions=false&user=1&ordering=-timestamp&p=1
+/admin/reports/aging-pages/?ordering=-last_published_at&live_status=live&p=1
+/admin/workflows/list/?ordering=name&show_disabled=true&p=1

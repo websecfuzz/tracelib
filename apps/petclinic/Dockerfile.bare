@@ -1,0 +1,31 @@
+FROM maven:3.9-eclipse-temurin-21 AS appbuilder
+ARG PETCLINIC_COMMIT=818c4136ea971c21674525f9053de0d9c7ad8cfe
+RUN git clone https://github.com/spring-projects/spring-petclinic.git /src \
+    && cd /src \
+    && git checkout ${PETCLINIC_COMMIT} \
+    && mvn -B -q package -DskipTests -Dmaven.test.skip=true \
+    && mkdir -p /out \
+    && cp target/*.jar /out/petclinic.jar \
+    && cp -r target/classes /out/classes
+
+FROM eclipse-temurin:21-jdk
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 ca-certificates curl \
+        default-mysql-client python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=appbuilder /out/petclinic.jar /app/petclinic.jar
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/petclinic/start.sh          /app/start.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app/start.sh
+
+ENV TRACELIB_PORT=8098 \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+EXPOSE 8098
+WORKDIR /app
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

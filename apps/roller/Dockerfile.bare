@@ -1,0 +1,45 @@
+FROM tomcat:9-jdk17-temurin
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 ca-certificates curl \
+        default-mysql-client python3 unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG ROLLER_VERSION=6.1.5
+RUN curl -fsSL -o /tmp/roller.tar.gz \
+        "https://archive.apache.org/dist/roller/roller-6.1/v${ROLLER_VERSION}/apache-roller-${ROLLER_VERSION}-binary.tar.gz" \
+    && tar xzf /tmp/roller.tar.gz -C /tmp \
+    && mkdir -p /usr/local/tomcat/webapps/roller \
+    && unzip -q "/tmp/apache-roller-${ROLLER_VERSION}/webapp/roller.war" -d /usr/local/tomcat/webapps/roller \
+    && rm -rf /tmp/roller.tar.gz "/tmp/apache-roller-${ROLLER_VERSION}"
+
+ARG JAVAMAIL_VERSION=1.6.2
+ARG ACTIVATION_VERSION=1.1.1
+RUN curl -fsSL -o /usr/local/tomcat/lib/javax.mail.jar \
+        "https://repo1.maven.org/maven2/com/sun/mail/javax.mail/${JAVAMAIL_VERSION}/javax.mail-${JAVAMAIL_VERSION}.jar" \
+    && curl -fsSL -o /usr/local/tomcat/lib/activation.jar \
+        "https://repo1.maven.org/maven2/javax/activation/activation/${ACTIVATION_VERSION}/activation-${ACTIVATION_VERSION}.jar"
+
+ARG MYSQL_DRIVER_VERSION=8.4.0
+RUN curl -fsSL -o /usr/local/tomcat/lib/mysql-connector-j.jar \
+        "https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/${MYSQL_DRIVER_VERSION}/mysql-connector-j-${MYSQL_DRIVER_VERSION}.jar"
+
+COPY apps/roller/roller-custom.properties /usr/local/tomcat/lib/roller-custom.properties
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/roller/start.sh             /app/start.sh
+COPY apps/roller/app-init.sh          /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app/start.sh /app-init.sh
+
+ENV TRACELIB_PORT=8099 \
+    CATALINA_OPTS="-Dport=8099" \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+RUN sed -i 's/port="8080"/port="8099"/' /usr/local/tomcat/conf/server.xml
+
+EXPOSE 8099
+WORKDIR /usr/local/tomcat
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

@@ -1,0 +1,17 @@
+services:
+  redmine:
+    build:
+      context: ../..
+      dockerfile: apps/redmine/Dockerfile.bare
+    ports:
+      - "8088:8088"
+    environment:
+      REDMINE_DB_SQLITE: /usr/src/redmine/sqlite/redmine.db
+      REDMINE_ADMIN_PASSWORD: admin123
+    volumes:
+      - redmine_data:/usr/src/redmine/sqlite
+      - redmine_files:/usr/src/redmine/files
+
+volumes:
+  redmine_data:
+  redmine_files:

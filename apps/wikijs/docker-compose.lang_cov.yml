@@ -1,0 +1,44 @@
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: wiki-root
+      MYSQL_DATABASE: wiki
+      MYSQL_USER: wiki
+      MYSQL_PASSWORD: wiki
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uwiki", "-pwiki"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  wikijs:
+    build:
+      context: ../..
+      dockerfile: apps/wikijs/Dockerfile.lang_cov
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8097:3000"
+    environment:
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: wiki
+      DB_PASS: wiki
+      DB_NAME: wiki
+      WIKIJS_ADMIN_EMAIL: admin@example.com
+      WIKIJS_ADMIN_PASSWORD: admin123456
+      WIKIJS_SITE_URL: http://localhost:8097
+      WAIT_FOR_DB: "1"
+    volumes:
+      - wikijs_coverage:/coverage
+
+volumes:
+  db_data:
+  wikijs_coverage:

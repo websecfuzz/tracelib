@@ -1,0 +1,18 @@
+FROM ghcr.io/requarks/wiki:2
+
+USER root
+
+RUN apk add --no-cache \
+        bash coreutils procps iproute2 ca-certificates curl mysql-client
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/wikijs/start.sh             /app/start.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app/start.sh
+
+ENV TRACELIB_PORT=3000 \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+EXPOSE 3000
+WORKDIR /wiki
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

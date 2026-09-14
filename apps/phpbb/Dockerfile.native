@@ -1,0 +1,96 @@
+FROM php:8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 \
+        autoconf pkg-config ca-certificates curl \
+        libzip-dev libpng-dev libonig-dev unzip git default-mysql-client \
+        clang libbpf-dev libelf-dev zlib1g-dev bpftool; \
+    docker-php-ext-install mysqli pdo_mysql gd zip mbstring; \
+    pecl install pcov; \
+    docker-php-ext-enable pcov; \
+    curl -fsSL https://getcomposer.org/installer | php -- \
+        --install-dir=/usr/local/bin --filename=composer; \
+    rm -rf /var/lib/apt/lists/*
+
+ARG PHPBB_VERSION=3.3.13
+RUN curl -fsSL "https://download.phpbb.com/pub/release/3.3/${PHPBB_VERSION}/phpBB-${PHPBB_VERSION}.tar.bz2" -o /tmp/phpbb.tbz2 \
+    && rm -rf /var/www/html \
+    && mkdir -p /var/www/html \
+    && tar -xjf /tmp/phpbb.tbz2 -C /tmp \
+    && cp -a /tmp/phpBB3/. /var/www/html/ \
+    && rm -rf /tmp/phpbb.tbz2 /tmp/phpBB3
+
+RUN a2enmod rewrite \
+    && sed -i 's/^Listen 80$/Listen 8089/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8089>/' /etc/apache2/sites-enabled/*.conf
+
+COPY webFuzz/instrumentor /opt/instrumentor
+RUN cd /opt/instrumentor && composer install --no-interaction --no-progress --no-dev
+COPY webfuzz-patches/EdgeVisitor.php /opt/instrumentor/src/visitors/EdgeVisitor.php
+
+WORKDIR /
+RUN php /opt/instrumentor/src/instrumentor.php \
+        --verbose --policy edge --method file \
+        --dir /var/www/html \
+    && rm -rf /var/www/html \
+    && mv /var/www/html_instrumented /var/www/html \
+    && chown -R www-data:www-data /var/www/html \
+    && mkdir -p /var/instr && chmod 777 /var/instr
+WORKDIR /var/www/html
+
+RUN mkdir -p /tracelib-support /coverage && chmod 777 /coverage
+COPY php-common/pcov_hook.php       /tracelib-support/pcov_hook.php
+COPY php-common/coverage_report.php /tracelib-support/coverage_report.php
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/phpbb/app-init.sh              /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+RUN { \
+        echo "pcov.enabled=1"; \
+        echo "pcov.directory=/var/www/html"; \
+        echo "auto_prepend_file=/tracelib-support/pcov_hook.php"; \
+    } > /usr/local/etc/php/conf.d/99-tracelib-pcov.ini
+
+EXPOSE 8089
+ENV TRACELIB_PORT=8089 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+COPY include  /tmp/tracelib/include
+COPY src      /tmp/tracelib/src
+COPY Makefile /tmp/tracelib/Makefile
+RUN cd /tmp/tracelib \
+    && make \
+    && install -m 0755 build/tracelib /usr/local/bin/tracelib \
+    && rm -rf /tmp/tracelib
+COPY common/entrypoint.sh                  /usr/local/bin/tracelib-entrypoint.sh
+COPY php-common/native_coverage_report.php /tracelib-support/native_coverage_report.php
+RUN chmod +x /usr/local/bin/tracelib-entrypoint.sh
+ENV TRACELIB_HEADER=X-REQUEST-ID
+
+COPY ebpf/Makefile /tmp/tracelib-ebpf/Makefile
+COPY ebpf/include  /tmp/tracelib-ebpf/include
+COPY ebpf/src      /tmp/tracelib-ebpf/src
+COPY ebpf/bpf      /tmp/tracelib-ebpf/bpf
+RUN set -eux; \
+    if ! command -v clang-19 >/dev/null 2>&1; then \
+        . /etc/os-release; \
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+            -o /etc/apt/trusted.gpg.d/apt.llvm.org.asc; \
+        echo "deb http://apt.llvm.org/${VERSION_CODENAME}/ llvm-toolchain-${VERSION_CODENAME}-19 main" \
+            > /etc/apt/sources.list.d/llvm19.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends clang-19; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+RUN cd /tmp/tracelib-ebpf \
+    && make EBPF=1 CLANG=clang-19 \
+    && test -x ./tracelib \
+    && install -m 0755 ./tracelib /usr/local/bin/tracelib_ebpf \
+    && rm -rf /tmp/tracelib-ebpf
+COPY common/ebpf-entrypoint.sh /usr/local/bin/ebpf-entrypoint.sh
+RUN chmod +x /usr/local/bin/ebpf-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

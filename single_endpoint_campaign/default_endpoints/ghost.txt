@@ -1,0 +1,10 @@
+/ghost/?group=&limit=10&include=roles
+/ghost/api/admin/users/me/?include=roles&limit=10
+/ghost/api/admin/pages/?include=tags%2Cauthors&limit=10&order=updated_at+desc
+/ghost/api/admin/posts/?include=tags%2Cauthors&limit=10&filter=status%3Apublished
+/ghost/api/admin/themes/?group=active&include=roles&limit=10
+/ghost/api/admin/session/?include=roles&limit=10
+/ghost/api/admin/settings/?group=site&limit=10
+/ghost/api/admin/site/?include=roles&limit=10
+/ghost/api/admin/config/?include=roles&limit=10
+/ghost/api/admin/tags/?include=count.posts&limit=10

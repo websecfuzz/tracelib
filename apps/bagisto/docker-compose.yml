@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: bagisto
+      MARIADB_USER: bagisto
+      MARIADB_PASSWORD: bagisto
+    volumes:
+      - bagisto_db:/var/lib/mysql
+
+  bagisto:
+    build:
+      context: ../..
+      dockerfile: apps/bagisto/Dockerfile
+    depends_on:
+      - db
+    ports:
+      - "8093:8093"
+    environment:
+      BAGISTO_DB_HOST: db
+      BAGISTO_DB_NAME: bagisto
+      BAGISTO_DB_USER: bagisto
+      BAGISTO_DB_PASSWORD: bagisto
+      BAGISTO_ADMIN_NAME: Admin
+      BAGISTO_ADMIN_EMAIL: admin@example.com
+      BAGISTO_ADMIN_PASSWORD: admin123
+    volumes:
+      - /dev/shm:/dev/shm
+      - bagisto_coverage:/coverage
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+
+volumes:
+  bagisto_db:
+  bagisto_coverage:

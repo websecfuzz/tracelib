@@ -1,0 +1,23 @@
+FROM redmine:5.1
+
+USER root
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        procps iproute2 ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/redmine/start.sh       /app/start.sh
+COPY apps/redmine/app-init.sh    /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh \
+             /app/start.sh \
+             /app-init.sh
+
+ENV TRACELIB_PORT=8088 \
+    REDMINE_DB_SQLITE=/usr/src/redmine/sqlite/redmine.db
+
+EXPOSE 8088
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

@@ -1,0 +1,106 @@
+FROM php:8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 \
+        autoconf pkg-config ca-certificates curl unzip git \
+        libzip-dev libpng-dev libonig-dev libicu-dev libxml2-dev \
+        libwebp-dev libjpeg62-turbo-dev libfreetype6-dev \
+        default-mysql-client \
+        clang libbpf-dev libelf-dev zlib1g-dev bpftool; \
+    docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp; \
+    docker-php-ext-install mysqli pdo_mysql gd zip mbstring intl opcache; \
+    pecl install pcov; \
+    docker-php-ext-enable pcov; \
+    curl -fsSL https://getcomposer.org/installer | php -- \
+        --install-dir=/usr/local/bin --filename=composer; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod rewrite \
+    && sed -i 's/^Listen 80$/Listen 8100/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8100>/' /etc/apache2/sites-enabled/*.conf
+
+RUN { \
+        echo "memory_limit=512M"; \
+        echo "max_execution_time=300"; \
+        echo "post_max_size=64M"; \
+        echo "upload_max_filesize=64M"; \
+    } > /usr/local/etc/php/conf.d/99-prestashop.ini
+
+RUN rm -rf /var/www/html
+COPY apps/prestashop /var/www/html
+RUN rm -rf /var/www/html/_resources /var/www/html/_init.sh \
+           /var/www/html/docker-compose.yaml /var/www/html/docker-compose.yml \
+           /var/www/html/docker-compose.native.yml \
+           /var/www/html/Dockerfile /var/www/html/Dockerfile.native \
+           /var/www/html/temp /var/www/html/tmp /var/www/html/coverage
+
+COPY webFuzz/instrumentor /opt/instrumentor
+RUN cd /opt/instrumentor && composer install --no-interaction --no-progress --no-dev
+COPY webfuzz-patches/EdgeVisitor.php /opt/instrumentor/src/visitors/EdgeVisitor.php
+
+RUN { echo 'vendor/composer'; echo 'var/cache'; } > /tmp/ps-exclude.txt \
+    && php /opt/instrumentor/src/instrumentor.php \
+        --verbose --policy edge --method file \
+        --exclude /tmp/ps-exclude.txt \
+        --dir /var/www/html \
+    && rm -rf /var/www/html \
+    && mv /var/www/html_instrumented /var/www/html \
+    && chown -R www-data:www-data /var/www/html \
+    && mkdir -p /var/instr && chmod 777 /var/instr
+
+RUN mkdir -p /tracelib-support /coverage && chmod 777 /coverage
+COPY php-common/pcov_hook.php       /tracelib-support/pcov_hook.php
+COPY php-common/coverage_report.php /tracelib-support/coverage_report.php
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/prestashop/app-init.sh         /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+RUN { \
+        echo "pcov.enabled=1"; \
+        echo "pcov.directory=/var/www/html"; \
+        echo "auto_prepend_file=/tracelib-support/pcov_hook.php"; \
+    } > /usr/local/etc/php/conf.d/99-tracelib-pcov.ini
+
+EXPOSE 8100
+ENV TRACELIB_PORT=8100 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+COPY include  /tmp/tracelib/include
+COPY src      /tmp/tracelib/src
+COPY Makefile /tmp/tracelib/Makefile
+RUN cd /tmp/tracelib \
+    && make \
+    && install -m 0755 build/tracelib /usr/local/bin/tracelib \
+    && rm -rf /tmp/tracelib
+COPY common/entrypoint.sh                  /usr/local/bin/tracelib-entrypoint.sh
+COPY php-common/native_coverage_report.php /tracelib-support/native_coverage_report.php
+RUN chmod +x /usr/local/bin/tracelib-entrypoint.sh
+ENV TRACELIB_HEADER=X-REQUEST-ID
+
+COPY ebpf/Makefile /tmp/tracelib-ebpf/Makefile
+COPY ebpf/include  /tmp/tracelib-ebpf/include
+COPY ebpf/src      /tmp/tracelib-ebpf/src
+COPY ebpf/bpf      /tmp/tracelib-ebpf/bpf
+RUN set -eux; \
+    if ! command -v clang-19 >/dev/null 2>&1; then \
+        . /etc/os-release; \
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+            -o /etc/apt/trusted.gpg.d/apt.llvm.org.asc; \
+        echo "deb http://apt.llvm.org/${VERSION_CODENAME}/ llvm-toolchain-${VERSION_CODENAME}-19 main" \
+            > /etc/apt/sources.list.d/llvm19.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends clang-19; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+RUN cd /tmp/tracelib-ebpf \
+    && make EBPF=1 CLANG=clang-19 \
+    && test -x ./tracelib \
+    && install -m 0755 ./tracelib /usr/local/bin/tracelib_ebpf \
+    && rm -rf /tmp/tracelib-ebpf
+COPY common/ebpf-entrypoint.sh /usr/local/bin/ebpf-entrypoint.sh
+RUN chmod +x /usr/local/bin/ebpf-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

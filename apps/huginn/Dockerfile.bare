@@ -1,0 +1,29 @@
+FROM ghcr.io/huginn/huginn-single-process:latest
+
+USER root
+
+RUN chown root:root /app/.env.example && chmod 0644 /app/.env.example
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 ca-certificates curl \
+        default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/huginn/start.sh             /app/start.sh
+COPY apps/huginn/app-init.sh          /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app/start.sh /app-init.sh
+
+ENV TRACELIB_PORT=8092 \
+    HOME=/app \
+    RAILS_ENV=production \
+    PORT=8092 \
+    IP=0.0.0.0 \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+WORKDIR /app
+EXPOSE 8092
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

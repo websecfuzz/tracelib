@@ -1,0 +1,75 @@
+# TraceLib strict feedback allowlist for synchronous Linux x86-64 web workloads.
+#
+# Format: one syscall name or non-negative syscall number per line. Blank lines
+# and text after # are ignored. The tracer loads this file once at startup.
+# This is a feedback policy, not a security sandbox or a universal complete set.
+
+# Inbound/file reads and socket receives
+read
+readv
+pread64
+preadv
+preadv2
+recvfrom
+recvmsg
+recvmmsg
+
+# Outbound/file writes and socket sends
+write
+writev
+pwrite64
+pwritev
+pwritev2
+sendto
+sendmsg
+sendmmsg
+
+# Kernel-assisted data transfer
+sendfile
+splice
+copy_file_range
+
+# File opening and lookup
+open
+openat
+openat2
+creat
+stat
+lstat
+fstat
+newfstatat
+statx
+access
+faccessat
+faccessat2
+getdents
+getdents64
+readlink
+readlinkat
+
+# Outbound database/cache/service connections and helper execution
+connect
+execve
+execveat
+
+# Persistent filesystem effects
+mkdir
+mkdirat
+rmdir
+unlink
+unlinkat
+mknod
+mknodat
+rename
+renameat
+renameat2
+link
+linkat
+symlink
+symlinkat
+truncate
+ftruncate
+fallocate
+fsync
+fdatasync
+syncfs

@@ -1,0 +1,63 @@
+FROM php:8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        procps iproute2 ca-certificates curl \
+        libzip-dev libpng-dev libonig-dev \
+        libwebp-dev libjpeg62-turbo-dev libfreetype6-dev \
+        default-mysql-client; \
+    docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp; \
+    docker-php-ext-install mysqli pdo_mysql gd zip mbstring; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod rewrite \
+    && sed -i 's/^Listen 80$/Listen 8094/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8094>/' /etc/apache2/sites-enabled/*.conf
+
+RUN { \
+        echo "memory_limit=512M"; \
+        echo "max_execution_time=300"; \
+    } > /usr/local/etc/php/conf.d/99-zencart.ini
+
+RUN rm -rf /var/www/html
+COPY apps/zencart /var/www/html
+RUN rm -rf /var/www/html/_resources /var/www/html/docker-compose.yaml \
+           /var/www/html/docker-compose.yml /var/www/html/docker-compose.native.yml \
+           /var/www/html/Dockerfile /var/www/html/Dockerfile.native \
+           /var/www/html/temp /var/www/html/_init.sh \
+           /var/www/html/coverage
+
+RUN set -eux; \
+    cp /var/www/html/includes/dist-configure.php             /var/www/html/includes/configure.php; \
+    cp /var/www/html/adminzcfuzz/includes/dist-configure.php /var/www/html/adminzcfuzz/includes/configure.php; \
+    sed -i \
+        -e "s#'https\?://localhost'#'http://localhost:8094'#g" \
+        -e "s#'/var/www/vhost/accountname/public_html/store/'#'/var/www/html/'#g" \
+        -e "s#define('DB_CHARSET', 'utf8')#define('DB_CHARSET', 'utf8mb4')#" \
+        -e "s#define('DB_SERVER', 'localhost')#define('DB_SERVER', 'db')#" \
+        -e "s#define('DB_SERVER_USERNAME', '')#define('DB_SERVER_USERNAME', 'user')#" \
+        -e "s#define('DB_SERVER_PASSWORD', '')#define('DB_SERVER_PASSWORD', 'password')#" \
+        -e "s#define('DB_DATABASE', '')#define('DB_DATABASE', 'db')#" \
+        -e "s#define('ENABLE_SSL', 'true')#define('ENABLE_SSL', 'false')#" \
+        -e "s#define('ENABLE_SSL_CATALOG', 'true')#define('ENABLE_SSL_CATALOG', 'false')#" \
+        /var/www/html/includes/configure.php \
+        /var/www/html/adminzcfuzz/includes/configure.php; \
+    printf "\ndefine('DIR_WS_ADMIN', '/adminzcfuzz/');\ndefine('DIR_FS_ADMIN', '/var/www/html/adminzcfuzz/');\n" \
+        >> /var/www/html/adminzcfuzz/includes/configure.php; \
+    php -l /var/www/html/includes/configure.php; \
+    php -l /var/www/html/adminzcfuzz/includes/configure.php; \
+    grep -q "http://localhost:8094" /var/www/html/includes/configure.php; \
+    grep -q "define('DB_SERVER', 'db')" /var/www/html/adminzcfuzz/includes/configure.php; \
+    chown -R www-data:www-data /var/www/html
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/zencart/app-init.sh         /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+EXPOSE 8094
+ENV TRACELIB_PORT=8094
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

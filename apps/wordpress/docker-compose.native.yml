@@ -1,0 +1,32 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+    volumes:
+      - wordpress_native_db:/var/lib/mysql
+
+  wordpress:
+    build:
+      context: ../..
+      dockerfile: apps/wordpress/Dockerfile.native
+    depends_on:
+      - db
+    ports:
+      - "8081:8081"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_TABLE_PREFIX: wp_
+    volumes:
+      - ${WEBFUZZ_INSTR_DIR:-./var-instr}:/var/instr
+      - wordpress_native_coverage:/coverage
+
+volumes:
+  wordpress_native_db:
+  wordpress_native_coverage:

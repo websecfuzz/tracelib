@@ -1,0 +1,128 @@
+FROM php:8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 \
+        autoconf pkg-config ca-certificates curl unzip git \
+        libzip-dev libpng-dev libonig-dev \
+        libwebp-dev libjpeg62-turbo-dev libfreetype6-dev \
+        default-mysql-client; \
+    docker-php-ext-configure gd --with-jpeg --with-freetype --with-webp; \
+    docker-php-ext-install mysqli pdo_mysql gd zip mbstring; \
+    pecl install pcov; \
+    docker-php-ext-enable pcov; \
+    curl -fsSL https://getcomposer.org/installer | php -- \
+        --install-dir=/usr/local/bin --filename=composer; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN a2enmod rewrite \
+    && sed -i 's/^Listen 80$/Listen 8094/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8094>/' /etc/apache2/sites-enabled/*.conf
+
+RUN { \
+        echo "memory_limit=512M"; \
+        echo "max_execution_time=300"; \
+    } > /usr/local/etc/php/conf.d/99-zencart.ini
+
+RUN rm -rf /var/www/html
+COPY apps/zencart /var/www/html
+RUN rm -rf /var/www/html/_resources /var/www/html/docker-compose.yaml \
+           /var/www/html/docker-compose.yml /var/www/html/docker-compose.native.yml \
+           /var/www/html/Dockerfile /var/www/html/Dockerfile.native \
+           /var/www/html/temp /var/www/html/_init.sh \
+           /var/www/html/coverage
+
+RUN set -eux; \
+    cp /var/www/html/includes/dist-configure.php            /var/www/html/includes/configure.php; \
+    cp /var/www/html/adminzcfuzz/includes/dist-configure.php /var/www/html/adminzcfuzz/includes/configure.php; \
+    sed -i \
+        -e "s#'https\?://localhost'#'http://localhost:8094'#g" \
+        -e "s#'/var/www/vhost/accountname/public_html/store/'#'/var/www/html/'#g" \
+        -e "s#define('DB_CHARSET', 'utf8')#define('DB_CHARSET', 'utf8mb4')#" \
+        -e "s#define('DB_SERVER', 'localhost')#define('DB_SERVER', 'db')#" \
+        -e "s#define('DB_SERVER_USERNAME', '')#define('DB_SERVER_USERNAME', 'user')#" \
+        -e "s#define('DB_SERVER_PASSWORD', '')#define('DB_SERVER_PASSWORD', 'password')#" \
+        -e "s#define('DB_DATABASE', '')#define('DB_DATABASE', 'db')#" \
+        -e "s#define('ENABLE_SSL', 'true')#define('ENABLE_SSL', 'false')#" \
+        -e "s#define('ENABLE_SSL_CATALOG', 'true')#define('ENABLE_SSL_CATALOG', 'false')#" \
+        /var/www/html/includes/configure.php \
+        /var/www/html/adminzcfuzz/includes/configure.php; \
+    printf "\ndefine('DIR_WS_ADMIN', '/adminzcfuzz/');\ndefine('DIR_FS_ADMIN', '/var/www/html/adminzcfuzz/');\n" \
+        >> /var/www/html/adminzcfuzz/includes/configure.php; \
+    php -l /var/www/html/includes/configure.php; \
+    php -l /var/www/html/adminzcfuzz/includes/configure.php; \
+    grep -q "http://localhost:8094" /var/www/html/includes/configure.php; \
+    grep -q "define('DB_SERVER', 'db')" /var/www/html/adminzcfuzz/includes/configure.php
+
+COPY webFuzz/instrumentor /opt/instrumentor
+RUN cd /opt/instrumentor && composer install --no-interaction --no-progress --no-dev
+COPY webfuzz-patches/EdgeVisitor.php /opt/instrumentor/src/visitors/EdgeVisitor.php
+
+RUN echo 'laravel/vendor/composer' > /tmp/zc-exclude.txt \
+    && php /opt/instrumentor/src/instrumentor.php \
+        --verbose --policy edge --method file \
+        --exclude /tmp/zc-exclude.txt \
+        --dir /var/www/html \
+    && rm -rf /var/www/html \
+    && mv /var/www/html_instrumented /var/www/html \
+    && chown -R www-data:www-data /var/www/html \
+    && mkdir -p /var/instr && chmod 777 /var/instr
+
+RUN mkdir -p /tracelib-support /coverage && chmod 777 /coverage
+COPY php-common/pcov_hook.php       /tracelib-support/pcov_hook.php
+COPY php-common/coverage_report.php /tracelib-support/coverage_report.php
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/zencart/app-init.sh            /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+RUN { \
+        echo "pcov.enabled=1"; \
+        echo "pcov.directory=/var/www/html"; \
+        echo "auto_prepend_file=/tracelib-support/pcov_hook.php"; \
+    } > /usr/local/etc/php/conf.d/99-tracelib-pcov.ini
+
+EXPOSE 8094
+ENV TRACELIB_PORT=8094 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+COPY include  /tmp/tracelib/include
+COPY src      /tmp/tracelib/src
+COPY Makefile /tmp/tracelib/Makefile
+RUN cd /tmp/tracelib \
+    && make \
+    && install -m 0755 build/tracelib /usr/local/bin/tracelib \
+    && rm -rf /tmp/tracelib
+COPY common/entrypoint.sh                  /usr/local/bin/tracelib-entrypoint.sh
+COPY php-common/native_coverage_report.php /tracelib-support/native_coverage_report.php
+RUN chmod +x /usr/local/bin/tracelib-entrypoint.sh
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends clang libbpf-dev libelf-dev zlib1g-dev bpftool \
+    && rm -rf /var/lib/apt/lists/*
+COPY ebpf/Makefile /tmp/tracelib-ebpf/Makefile
+COPY ebpf/include  /tmp/tracelib-ebpf/include
+COPY ebpf/src      /tmp/tracelib-ebpf/src
+COPY ebpf/bpf      /tmp/tracelib-ebpf/bpf
+RUN set -eux; \
+    if ! command -v clang-19 >/dev/null 2>&1; then \
+        . /etc/os-release; \
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+            -o /etc/apt/trusted.gpg.d/apt.llvm.org.asc; \
+        echo "deb http://apt.llvm.org/${VERSION_CODENAME}/ llvm-toolchain-${VERSION_CODENAME}-19 main" \
+            > /etc/apt/sources.list.d/llvm19.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends clang-19; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+RUN cd /tmp/tracelib-ebpf \
+    && make EBPF=1 CLANG=clang-19 \
+    && test -x ./tracelib \
+    && install -m 0755 ./tracelib /usr/local/bin/tracelib_ebpf \
+    && rm -rf /tmp/tracelib-ebpf
+COPY common/ebpf-entrypoint.sh /usr/local/bin/ebpf-entrypoint.sh
+RUN chmod +x /usr/local/bin/ebpf-entrypoint.sh
+ENV TRACELIB_HEADER=X-REQUEST-ID
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

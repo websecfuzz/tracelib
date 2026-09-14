@@ -1,0 +1,28 @@
+FROM ghcr.io/requarks/wiki:2
+
+USER root
+
+RUN apk add --no-cache \
+        bash coreutils procps iproute2 ca-certificates curl mysql-client \
+    && npm install -g c8@9 \
+    && npm cache clean --force
+
+RUN mkdir -p /tracelib-support /coverage /coverage/v8 \
+    && chmod 777 /coverage /coverage/v8
+COPY node-common/node_hook.js       /tracelib-support/node_hook.js
+COPY node-common/coverage_report.sh /tracelib-support/coverage_report.sh
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/wikijs/start.sh                /app/start.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh \
+             /tracelib-support/coverage_report.sh \
+             /app/start.sh
+
+ENV TRACELIB_PORT=3000 \
+    NODE_OPTIONS="--require /tracelib-support/node_hook.js" \
+    NODE_V8_COVERAGE=/coverage/v8 \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+EXPOSE 3000
+WORKDIR /wiki
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

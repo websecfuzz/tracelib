@@ -1,0 +1,10 @@
+/admin/users?q=&sort=alphabetically&status_filter%5Bis_2fa_enabled%5D=0&status_filter%5Bis_active%5D=1&status_filter%5Bis_admin%5D=1&status_filter%5Bis_prohibit_login%5D=0&status_filter%5Bis_restricted%5D=0
+/admin/monitor/stacktrace?q=&repos%5B%5D=&show=process&sort=oldest&state=open&type=created_by
+/pulls?q=&repos%5B%5D=&sort=oldest&state=open&type=assigned
+/issues?q=&repos%5B%5D=&sort=latest&state=open&type=assigned
+/milestones?q=&repos%5B%5D=&sort=asc&state=open&type=
+/explore/repos?language=&only_show_relevant=false&q=&sort=oldest&tab=
+/user/settings/repos?language=&q=&sort=alphabetically&tab=repositories
+/notifications/subscriptions?issueType=&labels=&sort=asc&state=all
+/gitadmin?language=&q=&sort=newest&tab=stars
+/notifications/watching?language=&q=&sort=oldest&tab=

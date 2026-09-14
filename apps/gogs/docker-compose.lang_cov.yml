@@ -1,0 +1,44 @@
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: gogs-root
+      MYSQL_DATABASE: gogs
+      MYSQL_USER: gogs
+      MYSQL_PASSWORD: gogs
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ugogs", "-pgogs"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  gogs:
+    build:
+      context: ../..
+      dockerfile: apps/gogs/Dockerfile.lang_cov
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      GOGS_ADMIN_USER: gogsadmin
+      GOGS_ADMIN_PASSWORD: admin123
+      GOGS_ADMIN_EMAIL: admin@example.com
+      GOGS_DB_HOST: db
+      GOGS_DB_NAME: gogs
+      GOGS_DB_USER: gogs
+      GOGS_DB_PASSWORD: gogs
+      WAIT_FOR_DB: "1"
+    volumes:
+      - gogs_coverage:/coverage
+      - gogs_data:/data
+
+volumes:
+  db_data:
+  gogs_coverage:
+  gogs_data:

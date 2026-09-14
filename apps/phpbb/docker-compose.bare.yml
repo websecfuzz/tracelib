@@ -1,0 +1,30 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: phpbb
+      MARIADB_USER: phpbb
+      MARIADB_PASSWORD: phpbb
+    volumes:
+      - phpbb_db:/var/lib/mysql
+
+  phpbb:
+    build:
+      context: ../..
+      dockerfile: apps/phpbb/Dockerfile.bare
+    depends_on:
+      - db
+    ports:
+      - "8089:8089"
+    environment:
+      PHPBB_DB_HOST: db
+      PHPBB_DB_NAME: phpbb
+      PHPBB_DB_USER: phpbb
+      PHPBB_DB_PASSWORD: phpbb
+      PHPBB_ADMIN_USER: admin
+      PHPBB_ADMIN_PASSWORD: admin12345678
+      PHPBB_ADMIN_EMAIL: admin@example.com
+
+volumes:
+  phpbb_db:

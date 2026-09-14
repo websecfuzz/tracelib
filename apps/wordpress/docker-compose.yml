@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: wordpress
+      MARIADB_DATABASE:      wordpress
+      MARIADB_USER:          wordpress
+      MARIADB_PASSWORD:      wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  wordpress:
+    build:
+      context: ../..
+      dockerfile: apps/wordpress/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+        - "8081:8081"
+    environment:
+      WORDPRESS_DB_HOST:     db:3306
+      WORDPRESS_DB_NAME:     wordpress
+      WORDPRESS_DB_USER:     wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - /dev/shm:/dev/shm
+      - wordpress_coverage:/coverage
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+
+volumes:
+  db_data:
+  wordpress_coverage:

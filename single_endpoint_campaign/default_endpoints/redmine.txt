@@ -1,0 +1,10 @@
+/issues.csv?all_words=1&attachments=1&available_columns%5B%5D=subject&c%5B%5D=priority&changesets=1&commit=Search&documents=1&f%5B%5D=&group_by=done_ratio&issues=1&messages=1&news=1&open_issues=1&options=&projects=1&q=&set_filter=1&sort=id%3Adesc&t%5B%5D=estimated_hours&titles_only=1&type=IssueQuery&utf8=%E2%9C%93&wiki_pages=1
+/my/page?available_columns%5B%5D=project&c%5B%5D=description&c%5B%5D=last_notes&changesets%5B%5D=&commit%5B%5D=&display_type=list&documents=&f%5B%5D=&from=&group_by=&issues=&jump%5B%5D=&set_filter=1&show_documents=&show_files=&show_issues=&sort=id%3Adesc&t%5B%5D=estimated_hours&type=IssueQuery&utf8=%E2%9C%93&wiki_pages%5B%5D=
+/login?from=2026-06-23&jump%5B%5D=&q%5B%5D=&scope=&show_changesets=1&show_documents=1&show_files=1&show_issues=1&show_messages=1&show_news=1&show_time_entries=1&show_wiki_edits=1&submit=Apply&user_id=1&utf8=%E2%9C%93
+/search?all_words=1&attachments=1&changesets=1&commit=Search&documents=1&issues=1&messages=1&news=1&open_issues=1&options=&projects=1&q=&titles_only=1&utf8=%E2%9C%93&wiki_pages=1
+/admin?from=2026-06-23&q=&scope=&show_changesets=1&show_documents=1&show_files=1&show_issues=1&show_messages=1&show_news=1&show_time_entries=1&show_wiki_edits=1&submit=Apply&user_id=1&utf8=%E2%9C%93
+/activity?from=2026-06-23&show_changesets=1&show_documents=1&show_files=1&show_issues=1&show_messages=1&show_news=1&show_time_entries=1&show_wiki_edits=1&submit=Apply&user_id=1&utf8=%E2%9C%93
+/issues?available_columns%5B%5D=project&c%5B%5D=description&c%5B%5D=last_notes&f%5B%5D=&group_by=&jump%5B%5D=&q%5B%5D=&set_filter=1&sort=id%3Adesc&t%5B%5D=estimated_hours&type=IssueQuery&utf8=%E2%9C%93
+/settings/edit?available_columns%5B%5D=parent&c%5B%5D=updated_on&f%5B%5D=&group_by=project&set_filter=1&sort=id%3Adesc&t%5B%5D=estimated_hours&tab=issues&type=IssueQuery&utf8=%E2%9C%93
+/issues.pdf?available_columns%5B%5D=priority&c%5B%5D=project&f%5B%5D=&group_by=&set_filter=1&sort=id%3Adesc&t%5B%5D=estimated_hours&type=IssueQuery&utf8=%E2%9C%93
+/projects?available_columns%5B%5D=name&c%5B%5D=&display_type=list&f%5B%5D=&group_by=&set_filter=1&sort=name%3Aasc&type=ProjectQuery&utf8=%E2%9C%93

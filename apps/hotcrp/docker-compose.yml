@@ -1,0 +1,46 @@
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: hotcrp-root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-photcrp-root"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  hotcrp:
+    build:
+      context: ../..
+      dockerfile: apps/hotcrp/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      HOTCRP_DB_HOST: db
+      HOTCRP_DB_NAME: hotcrp
+      HOTCRP_DB_USER: hotcrp
+      HOTCRP_DB_PASSWORD: hotcrp
+      HOTCRP_DB_ADMIN_USER: root
+      HOTCRP_DB_ADMIN_PASSWORD: hotcrp-root
+      HOTCRP_ADMIN_EMAIL: admin@example.com
+      HOTCRP_ADMIN_NAME: Admin
+      HOTCRP_ADMIN_PASSWORD: Password123!
+    volumes:
+      - ./conf:/var/www/html/conf
+      - /dev/shm:/dev/shm
+      - hotcrp_coverage:/coverage
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+volumes:
+  db_data:
+  hotcrp_coverage:

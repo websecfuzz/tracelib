@@ -1,0 +1,29 @@
+FROM golang:1.22-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 ca-certificates curl \
+        git default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG GOGS_VERSION=v0.13.2
+RUN git clone --depth 1 --branch ${GOGS_VERSION} https://github.com/gogs/gogs.git /src/gogs
+WORKDIR /src/gogs
+RUN go build -o /usr/local/bin/gogs . \
+    && cd / && rm -rf /src /root/.cache
+
+RUN mkdir -p /data/gogs/conf /data/gogs/log /data/gogs/data /data/repos \
+    && chmod -R 777 /data
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/gogs/start.sh                  /app/start.sh
+COPY apps/gogs/app-init.sh               /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app/start.sh /app-init.sh
+
+ENV TRACELIB_PORT=8091 \
+    GOGS_CUSTOM=/data/gogs \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+EXPOSE 8091
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

@@ -1,0 +1,10 @@
+/administrator/index.php?option=com_config&view=application&component=com_config&path=&return=
+/administrator/index.php?option=com_users&view=users&filter%5Bgroup_id%5D=1&filter%5Bstate%5D=0&list%5Bfullordering%5D=a.name+ASC&limit=20&limitstart=0
+/administrator/index.php?option=com_content&view=articles&filter%5Bsearch%5D=&filter%5Bpublished%5D=*&filter%5Bcategory_id%5D=&filter%5Bauthor_id%5D=&filter%5Blanguage%5D=*&list%5Bfullordering%5D=a.title+ASC
+/administrator/index.php?option=com_menus&view=items&menutype=mainmenu&filter%5Bsearch%5D=&filter%5Bpublished%5D=*&filter%5Bclient_id%5D=0&list%5Bfullordering%5D=a.lft+ASC
+/administrator/index.php?option=com_modules&view=modules&client_id=0&filter%5Bsearch%5D=&filter%5Bstate%5D=*&filter%5Bposition%5D=&filter%5Bmodule%5D=&list%5Bfullordering%5D=a.position+ASC
+/administrator/index.php?option=com_plugins&view=plugins&filter%5Bsearch%5D=&filter%5Benabled%5D=&filter%5Bfolder%5D=&list%5Bfullordering%5D=folder+ASC
+/administrator/index.php?option=com_categories&view=categories&extension=com_content&filter%5Bsearch%5D=&filter%5Bpublished%5D=*&filter%5Baccess%5D=&list%5Bfullordering%5D=a.lft+ASC
+/administrator/index.php?option=com_media&path=local-images%3A%2F&mediatypes=0&search=&list%5Bfullordering%5D=name+ASC
+/administrator/index.php?option=com_privacy&view=requests&filter%5Bstatus%5D=1&list%5Bfullordering%5D=a.requested_at+ASC
+/index.php/component/users/reset?Itemid=101

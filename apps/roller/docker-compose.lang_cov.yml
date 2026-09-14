@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: roller-root
+      MYSQL_DATABASE: roller
+      MYSQL_USER: roller
+      MYSQL_PASSWORD: roller
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroller", "-proller"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  roller:
+    build:
+      context: ../..
+      dockerfile: apps/roller/Dockerfile.lang_cov
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    environment:
+      ROLLER_DB_HOST: db
+      ROLLER_DB_USER: roller
+      ROLLER_DB_PASSWORD: roller
+      ROLLER_ADMIN_USER: rolleradmin
+      ROLLER_ADMIN_PASSWORD: admin123
+      ROLLER_ADMIN_EMAIL: admin@example.com
+      WAIT_FOR_DB: "1"
+    volumes:
+      - roller_coverage:/coverage
+      - roller_data:/root/roller_data
+
+volumes:
+  db_data:
+  roller_coverage:
+  roller_data:

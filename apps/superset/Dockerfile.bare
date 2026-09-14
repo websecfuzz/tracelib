@@ -1,0 +1,28 @@
+FROM apache/superset:4.0.2
+
+USER root
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 ca-certificates curl \
+        default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY common/native-entrypoint.sh      /usr/local/bin/native-entrypoint.sh
+COPY apps/superset/superset_config.py /app/pythonpath/superset_config.py
+COPY apps/superset/start.sh           /app/start.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app/start.sh
+
+ENV PYTHONPATH=/app/pythonpath \
+    SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py \
+    FLASK_APP=superset \
+    SUPERSET_HOME=/app/superset_home \
+    SUPERSET_WSGI_MODULE=superset.app:create_app() \
+    TRACELIB_PORT=8096 \
+    UPSTREAM_ENTRYPOINT=docker-entrypoint.sh
+
+EXPOSE 8096
+WORKDIR /app
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["/app/start.sh"]

@@ -1,0 +1,24 @@
+FROM wordpress:php8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        curl ca-certificates procps iproute2; \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+        -o /usr/local/bin/wp \
+    && chmod +x /usr/local/bin/wp
+
+RUN sed -i 's/^Listen 80$/Listen 8081/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8081>/' /etc/apache2/sites-enabled/*.conf
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/wordpress/wp-install.sh     /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+ENV TRACELIB_PORT=8081
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

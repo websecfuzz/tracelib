@@ -1,0 +1,103 @@
+FROM php:8.2-apache
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential libc6-dev procps iproute2 \
+        autoconf pkg-config ca-certificates curl \
+        libzip-dev libpng-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
+        libfreetype6-dev libjpeg62-turbo-dev libwebp-dev \
+        libpq-dev libicu-dev unzip git default-mysql-client \
+        clang libbpf-dev libelf-dev zlib1g-dev bpftool; \
+    docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp; \
+    docker-php-ext-install mysqli pdo_mysql gd zip mbstring intl bcmath xml calendar exif; \
+    pecl install pcov; \
+    docker-php-ext-enable pcov; \
+    curl -fsSL https://getcomposer.org/installer | php -- \
+        --install-dir=/usr/local/bin --filename=composer; \
+    rm -rf /var/lib/apt/lists/*
+
+ARG BAGISTO_VERSION=v2.2.4
+RUN git clone --depth 1 --branch ${BAGISTO_VERSION} https://github.com/bagisto/bagisto.git /var/www/bagisto \
+    && cd /var/www/bagisto \
+    && composer install --no-interaction --no-progress --optimize-autoloader \
+    && rm -rf /var/www/html \
+    && ln -s /var/www/bagisto /var/www/html
+
+RUN a2enmod rewrite \
+    && sed -i 's/^Listen 80$/Listen 8093/' /etc/apache2/ports.conf \
+    && sed -i 's/<VirtualHost \*:80>/<VirtualHost *:8093>/' /etc/apache2/sites-enabled/*.conf \
+    && sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/bagisto/public|' /etc/apache2/sites-enabled/*.conf \
+    && printf '<Directory /var/www/bagisto/public>\n  AllowOverride All\n  Require all granted\n</Directory>\n' \
+        > /etc/apache2/conf-enabled/bagisto.conf
+
+COPY webFuzz/instrumentor /opt/instrumentor
+RUN cd /opt/instrumentor && composer install --no-interaction --no-progress --no-dev
+COPY webfuzz-patches/EdgeVisitor.php /opt/instrumentor/src/visitors/EdgeVisitor.php
+
+RUN echo 'vendor/composer' > /tmp/bagisto-exclude.txt \
+    && php /opt/instrumentor/src/instrumentor.php \
+        --verbose --policy edge --method file \
+        --exclude /tmp/bagisto-exclude.txt \
+        --dir /var/www/bagisto \
+    && rm -rf /var/www/bagisto \
+    && mv /var/www/bagisto_instrumented /var/www/bagisto \
+    && rm -f /var/www/html \
+    && ln -s /var/www/bagisto /var/www/html \
+    && chown -R www-data:www-data /var/www/bagisto \
+    && mkdir -p /var/instr && chmod 777 /var/instr
+
+RUN mkdir -p /tracelib-support /coverage && chmod 777 /coverage
+COPY php-common/pcov_hook.php       /tracelib-support/pcov_hook.php
+COPY php-common/coverage_report.php /tracelib-support/coverage_report.php
+COPY common/native-entrypoint.sh    /usr/local/bin/native-entrypoint.sh
+COPY apps/bagisto/app-init.sh            /app-init.sh
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /app-init.sh
+
+RUN { \
+        echo "pcov.enabled=1"; \
+        echo "pcov.directory=/var/www/bagisto"; \
+        echo "auto_prepend_file=/tracelib-support/pcov_hook.php"; \
+    } > /usr/local/etc/php/conf.d/99-tracelib-pcov.ini
+
+EXPOSE 8093
+ENV TRACELIB_PORT=8093 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+COPY include  /tmp/tracelib/include
+COPY src      /tmp/tracelib/src
+COPY Makefile /tmp/tracelib/Makefile
+RUN cd /tmp/tracelib \
+    && make \
+    && install -m 0755 build/tracelib /usr/local/bin/tracelib \
+    && rm -rf /tmp/tracelib
+COPY common/entrypoint.sh                  /usr/local/bin/tracelib-entrypoint.sh
+COPY php-common/native_coverage_report.php /tracelib-support/native_coverage_report.php
+RUN chmod +x /usr/local/bin/tracelib-entrypoint.sh
+ENV TRACELIB_HEADER=X-REQUEST-ID
+
+COPY ebpf/Makefile /tmp/tracelib-ebpf/Makefile
+COPY ebpf/include  /tmp/tracelib-ebpf/include
+COPY ebpf/src      /tmp/tracelib-ebpf/src
+COPY ebpf/bpf      /tmp/tracelib-ebpf/bpf
+RUN set -eux; \
+    if ! command -v clang-19 >/dev/null 2>&1; then \
+        . /etc/os-release; \
+        curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+            -o /etc/apt/trusted.gpg.d/apt.llvm.org.asc; \
+        echo "deb http://apt.llvm.org/${VERSION_CODENAME}/ llvm-toolchain-${VERSION_CODENAME}-19 main" \
+            > /etc/apt/sources.list.d/llvm19.list; \
+        apt-get update; \
+        apt-get install -y --no-install-recommends clang-19; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+RUN cd /tmp/tracelib-ebpf \
+    && make EBPF=1 CLANG=clang-19 \
+    && test -x ./tracelib \
+    && install -m 0755 ./tracelib /usr/local/bin/tracelib_ebpf \
+    && rm -rf /tmp/tracelib-ebpf
+COPY common/ebpf-entrypoint.sh /usr/local/bin/ebpf-entrypoint.sh
+RUN chmod +x /usr/local/bin/ebpf-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["apache2-foreground"]

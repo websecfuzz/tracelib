@@ -1,0 +1,20 @@
+# Lets Claude Code run the TraceLib eBPF verifier check without a password.
+#
+# READ THIS BEFORE INSTALLING. The wrapper executes ebpf/tracelib, a binary that
+# is rebuilt from this repo on every change. Allowing it to run as root means
+# root executes code produced in this working tree. That is root access, not a
+# narrow permission. Install it while iterating on the BPF program, and remove it
+# afterwards:   sudo rm /etc/sudoers.d/tracelib-verify
+#
+# Install:
+#   sudo install -o root -g root -m 0755 \
+#        /home/arya/Documents/release/agfuzz/ebpf/tools/verify-bpf.sh \
+#        /usr/local/sbin/tracelib-verify-bpf
+#   sudo install -o root -g root -m 0440 \
+#        /home/arya/Documents/release/agfuzz/ebpf/tools/sudoers-tracelib-verify \
+#        /etc/sudoers.d/tracelib-verify
+#   sudo visudo -c        # confirm the file parses before trusting it
+#
+# The installed copy at /usr/local/sbin is root-owned, so editing the repo copy
+# does not change what runs as root -- reinstall deliberately when it changes.
+arya ALL=(root) NOPASSWD: /usr/local/sbin/tracelib-verify-bpf, /usr/local/sbin/tracelib-verify-bpf *

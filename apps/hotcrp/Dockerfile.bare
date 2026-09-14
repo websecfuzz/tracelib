@@ -1,0 +1,24 @@
+FROM php:8.3-cli
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git unzip default-mysql-client procps iproute2 \
+        ca-certificates curl \
+    && docker-php-ext-install mysqli pdo_mysql \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /var/www/html
+RUN git clone --depth 1 https://github.com/kohler/hotcrp.git /var/www/html
+
+COPY common/native-entrypoint.sh /usr/local/bin/native-entrypoint.sh
+COPY apps/hotcrp/start.sh             /usr/local/bin/hotcrp-start
+COPY apps/hotcrp/ensure-admin.php     /var/www/html/ensure-admin.php
+RUN chmod +x /usr/local/bin/native-entrypoint.sh /usr/local/bin/hotcrp-start
+
+EXPOSE 8087
+ENV TRACELIB_PORT=8087 \
+    UPSTREAM_ENTRYPOINT=docker-php-entrypoint
+
+ENTRYPOINT ["/usr/local/bin/native-entrypoint.sh"]
+CMD ["hotcrp-start"]

@@ -1,0 +1,10 @@
+/admin/catalog/products?sort[column]=created_at&sort[order]=desc&filters[type][0]=simple&pagination[page]=1&pagination[per_page]=20&search=
+/admin/catalog/categories?sort[column]=position&sort[order]=asc&filters[status][0]=1&pagination[page]=1&pagination[per_page]=20
+/admin/catalog/attributes?sort[column]=code&sort[order]=asc&filters[type][0]=select&pagination[page]=1&pagination[per_page]=20
+/admin/sales/orders?sort[column]=created_at&sort[order]=desc&filters[status][0]=pending&filters[grand_total][0]=0&pagination[page]=1&pagination[per_page]=20
+/admin/sales/invoices?sort[column]=created_at&sort[order]=desc&filters[state][0]=paid&pagination[page]=1&pagination[per_page]=20
+/admin/customers/customers?sort[column]=email&sort[order]=asc&filters[gender][0]=male&filters[status][0]=1&pagination[page]=1&pagination[per_page]=20&search=
+/admin/marketing/promotions/cart-rules?sort[column]=starts_from&sort[order]=desc&filters[status][0]=1&pagination[page]=1&pagination[per_page]=20
+/admin/marketing/search-seo/search-terms?sort[column]=results&sort[order]=desc&filters[channel][0]=default&pagination[page]=1&pagination[per_page]=20&search=
+/admin/reporting/sales?type=sales&period=month&start=2026-01-01&end=2026-12-31&channel=default&currency=USD
+/admin/settings/taxes/rates?sort[column]=identifier&sort[order]=asc&pagination[page]=1&pagination[per_page]=20&search=

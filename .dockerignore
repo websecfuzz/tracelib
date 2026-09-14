@@ -1,0 +1,7 @@
+# Never copy host-compiled eBPF artifacts into container builds.  Several app
+# images build ebpf/ in-image so the resulting objects match the image's libc
+# and libbpf versions.
+**/*.o
+ebpf/tracelib
+ebpf/tracelib.skel.h
+ebpf/test/test_basic
